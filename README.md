@@ -1,4 +1,6 @@
-# Portfolio
+# Data Science Portfolio
+
+Repository contains data science projects completed by my for academic and self-learning purposes. These are presented in Jupyter Notebook
 
 #### Technical Skills: Python, R, SQL
 
