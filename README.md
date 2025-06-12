@@ -2,7 +2,7 @@
 
 Repository contains data science projects completed by my for academic and self-learning purposes. These are presented in Jupyter Notebook
 
-#### Technical Skills: Python, R, SQL
+#### Language and Packages: Python, R, SQL, Pandas, NumPy, TensorLy, Scikit-learn, SciPy, NLTK, Excel
 
 ## Education
 |Analytics, M.S. | Georgia Institute of Technology (_Apr 2026_)|
