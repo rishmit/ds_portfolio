@@ -1,11 +1,41 @@
-# Data Science Portfolio
+# 🧠 Data Science Portfolio
 
-Repository contains data science projects completed by my for academic and self-learning purposes. These are presented in Jupyter Notebook
+Welcome to my data science portfolio! This repository showcases projects I've completed through academic training and self-learning. Projects are presented using **Jupyter Notebooks**.
 
-#### Language and Packages: Python, R, SQL, Pandas, NumPy, TensorLy, Scikit-learn, SciPy, NLTK, Excel
+---
 
-## Education
-|Analytics, M.S. | Georgia Institute of Technology (_Apr 2026_)|
-|Chemistry, M.S. | Pennsylvania State University (_Aug 2019_)|
-|Chemistry, M.S. | Indian Institute of Technology Delhi (_Aug 2013_)|
-|Chemistry, B.S. | St. Xavier's College (_Aug 2010_)|
+## 🧰 Technical Skills
+**Language & Libraries**
+- Python, R, SQL
+- Pandas, NumPy, TensorLy, Scikit-learn, SciPy, NLTK, Excel
+
+**Visualization Tools**
+- Matplotlib, Plotly, Tableau, PowerBI
+
+**Core Techniques**
+- Exploratory Data Analysis
+- Statistical Modeling
+- Machine Learning
+- Data Visualization & Storytelling
+
+---
+
+## 🎓 Education
+
+| Degree                     | Institution                                | Year       |
+|---------------------------|--------------------------------------------|------------|
+| M.S. in Analytics         | Georgia Institute of Technology            | _Apr 2026_ |
+| M.S. in Chemistry         | Pennsylvania State University              | _Aug 2019_ |
+| M.S. in Chemistry         | Indian Institute of Technology, Delhi      | _Aug 2013_ |
+| B.S. in Chemistry         | St. Xavier's College                       | _Aug 2010_ |
+
+---
+
+## 📂 Projects
+
+---
+
+## 📫 Contact
+
+- 💼 [LinkedIn](https://www.linkedin.com/in/utsab-mitra-768bb03a/)
+- 📧 Email: utsab.mitra@yahoo.com
