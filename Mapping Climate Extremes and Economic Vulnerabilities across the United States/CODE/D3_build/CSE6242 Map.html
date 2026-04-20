@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <title>CSE6242_GroupProject_Team105_Optimized</title>
+
+  <!-- Libraries -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    #header { margin-left: 50px; margin-top: 25px; margin-bottom: 5px; text-align: left; }
+    #title { margin: 0; font-size: 26px; font-weight: 600; color: #222; }
+    #team { margin-top: 6px; font-size: 16px; color: #555; }
+
+        /* --- GRID LAYOUT --- */
+    #container {
+      display: grid;
+      grid-template-columns: 1000px 400px; /* left = map+controls, right = details */
+      grid-template-rows: auto 600px;      /* top = controls, bottom = map */
+      gap: 20px;
+      align-items: start;
+      margin-left: 50px;
+      margin-top: 10px;
+    }
+
+    #controls {
+      grid-column: 1;
+      grid-row: 1;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #map-container {
+      grid-column: 1;
+      grid-row: 2;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #details {
+      grid-column: 2;
+      grid-row: 1 / span 2;   /* spans both controls and map rows */
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      width: 400px;
+      height: calc(800px + 20px + 20px);
+    }
+
+    #disasterSelect {
+      width: 350px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    #slider-time {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    #slider-label-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    #slider-date-display {
+      font-weight: bold;
+      color: #000;
+    }
+
+    #play-pause-btn {
+      margin-left: auto;
+      padding: 4px 10px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background-color: #f3f3f3;
+    }
+
+    #play-pause-btn.playing {
+      background-color: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+
+    #slider-time-svg {
+      width: 100%;
+      height: 80px;
+      background-color: transparent;
+    }
+
+    svg {
+      width: 1000px;
+      height: 600px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      background-color: white;
+    }
+
+    .county {
+      stroke: #ffffff;
+      stroke-width: 0.5;
+    }
+
+    .state-borders {
+      fill: none;
+      stroke: #333;
+      stroke-width: 1.2px;
+      pointer-events: none;
+    }
+
+    .tooltip {
+      color: white;
+      position: absolute;
+      padding: 7px;
+      font-size: 0.8em;
+      pointer-events: none;
+      background: rgba(51,50,50,0.9);
+      border: 1px solid #ffffff;
+      border-radius: 4px;
+      box-shadow: 3px 3px 10px rgba(0,0,0,0.25);
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="header">
+    <h1 id="title">Mapping Climate Extremes and Economic Vulnerabilities across the United States</h1>
+    <h4 id="team">Team 105: Utsab Mitra, Sam Bolig, Katheryn Sauvigne, Daniel Damiano Cano, Jose Alejandro Rodriguez</h4>
+  </div>
+
+  <div id="container">
+    <div id="controls">
+      <div>
+        <label for="disasterSelect"><strong>Parameter:</strong></label>
+        <select id="disasterSelect"></select>
+      </div>
+      <div id="slider-time">
+        <div id="slider-label-row">
+          <label for="yearSlider"><strong>Select Year-Month:</strong></label>
+          <button id="play-pause-btn">▶️ Play</button>
+        </div>
+        <svg id="slider-time-svg"></svg>
+      </div>
+    </div>
+
+    <div id="details"><h3>Details</h3><div id="textdetails"></div></div>
+    <div id="map-row">
+      <div id="map-container"><svg id="choropleth"></svg></div>
+    </div>
+  </div>
+
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const width = 1000, height = 600;
+    const defaultColor = "#e0e0e0";
+    const tooltip = d3.select("#tooltip").style("opacity", 0).style("visibility", "hidden");
+    const canvas = d3.select("#choropleth");
+
+    let currentDisasterSelected = null;
+    let currentDisplayName = null;
+    let currentIsRatio = false;
+    let currentIsRank = false;
+    let currentDate = new Date(2000, 0, 1);
+    let isPlaying = false, animationTimer = null;
+
+    const yearCache = new Map();
+    const colorScales = new Map();
+
+    const minDate = new Date(2000, 0, 1);
+    const maxDate = new Date(2025, 11, 1);
+    const months = d3.timeMonth.range(minDate, d3.timeMonth.offset(maxDate, 1));
+
+    const ratioColumns = new Set(["fema_damage_ratio"]);
+    const rankColumns  = new Set(["weather_risk_rank"]);
+
+    const sliderTime = d3.sliderBottom()
+      .min(minDate).max(maxDate)
+      .width(width - 120)
+      .tickFormat(d3.timeFormat("%Y"))
+      .tickValues(months.filter(d => d.getMonth() === 0))
+      .default(minDate)
+      .displayValue(false);
+
+    const gTime = d3.select("#slider-time-svg").append("g").attr("transform", "translate(40,30)");
+    gTime.call(sliderTime);
+    gTime.selectAll("text").style("font-size", "12px").style("fill", "#888");
+
+    const formatCurrency = v => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+    const formatPercent  = v => d3.format(".1f")(v * 100) + "%";
+
+    // --------- Caching + Data Load ---------
+    function loadYearData(year) {
+      const path = `data/resilience_${year}.csv`;
+      return d3.csv(path, d => ({
+        countyFIPS: +d.GEOID,
+        Year: +d.year,
+        Month: +d.month_no,
+        Month_Name: d.month,
+        drought_damage: +d["Drought"],
+        fire_smoke_damage: +d["Fire/Smoke"],
+        flood_ocean_damage: +d["Flood/Ocean"],
+        heat_damage: +d["Heat"],
+        storm_damage: +d["Hurricane/Storm"],
+        other_damage: +d["Other"],
+        winter_damage: +d["Snow/Ice/Cold"],
+        tornado_damage: +d["Tornado"],
+        total_damage: +d["total_damage"],
+        damage_per_capita: +d["damage_per_capita"],
+        noaa_description: d["NOAA_description"],
+        fema_spend: +d["fema_spend"],
+        fema_per_capita: +d["fema_per_capita"],
+        fema_damage_ratio: +d["fema_damage_ratio"],
+        population: +d["population"],
+        weather_risk_rank: +d["weather_risk_rank"],
+      })).then(rows => {
+        const byKey = new Map(rows.map(d => [`${d.countyFIPS}_${d.Year}_${d.Month}`, d]));
+        yearCache.set(year, { rows, byKey });
+        return { rows, byKey };
+      });
+    }
+
+    function getColorScale(key) {
+      if (colorScales.has(key)) return colorScales.get(key);
+      let scale, thresholds;
+      if (ratioColumns.has(key)) {
+        thresholds = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0];
+        scale = d3.scaleThreshold()
+          .domain(thresholds)
+          .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7",
+                  "#d1e5f0","#92c5de","#4393c3","#2166ac","#053061","#021e4d"]);
+      } else if (rankColumns.has(key)) {
+        scale = d3.scaleLinear()
+          .domain([1, 100])
+          .interpolate(d3.interpolateHcl)
+          .range(["#8B0000", "#D3D3D3"])
+          .clamp(true);
+      } else {
+        thresholds = [10_000,100_000,1_000_000,10_000_000,100_000_000];
+        scale = d3.scaleThreshold()
+          .domain(thresholds)
+          .range(["#cccccc","#ffffb2","#ffd92f","#fe9929","#d7301f","#35063e"]);
+      }
+      colorScales.set(key, scale);
+      return scale;
+    }
+
+    // --------- Data + Map ---------
+    Promise.all([
+      d3.json("data/usa_counties.json"),
+      d3.csv("data/county_fips_master.csv", d => ({
+        CountyFIPS: +d.fips,
+        CountyName: d.county_name,
+        StateAbbr: d.state_abbr,
+        StateName: d.state_name
+      })),
+      loadYearData(2000)
+    ]).then(([countyURLData, fipsData, yearData]) => {
+      let factsByKey = yearData.byKey;
+      const countyData = topojson.feature(countyURLData, countyURLData.objects.counties).features;
+      const stateData  = topojson.feature(countyURLData, countyURLData.objects.states).features;
+
+      const disasterColumnMap = {
+        "Weather Risk Rank": "weather_risk_rank",
+        "FEMA - Damage Ratio": "fema_damage_ratio",
+        "FEMA - Spending": "fema_spend",
+        "WEATHER - All Events": "total_damage",
+        "WEATHER - Hurricane/Storm": "storm_damage",
+        "WEATHER - Flood/Ocean": "flood_ocean_damage",
+        "WEATHER - Fire/Smoke": "fire_smoke_damage",
+        "WEATHER - Snow/Ice/Cold": "winter_damage",
+        "WEATHER - Tornado": "tornado_damage",
+        "WEATHER - Drought": "drought_damage",
+        "WEATHER - Other": "other_damage"
+      };
+
+      const select = d3.select("#disasterSelect");
+      Object.keys(disasterColumnMap).forEach(n =>
+        select.append("option").attr("value", n).text(n)
+      );
+
+      select.property("value", "Weather Risk Rank");
+      currentDisplayName = "Weather Risk Rank";
+      currentDisasterSelected = disasterColumnMap["Weather Risk Rank"];
+      currentIsRatio = false;
+      currentIsRank = true;
+
+      const path = d3.geoPath();
+      const zoom = d3.zoom()
+        .scaleExtent([1, 8])
+        .on("zoom", () => {
+          mapGroup.attr("transform", d3.event.transform)
+            .attr("stroke-width", 1 / d3.event.transform.k);
+        });
+
+      const canvasSel = d3.select("#choropleth");
+      canvasSel.call(zoom).on("dblclick.zoom", null);
+      canvasSel.on("dblclick", () => {
+        canvasSel.transition().duration(200)
+          .call(zoom.transform, d3.zoomIdentity);
+      });
+
+      const mapGroup = canvas.append("g");
+      mapGroup.selectAll(".county")
+        .data(countyData).enter()
+        .append("path")
+        .attr("class","county")
+        .attr("d", path)
+        .attr("fill", defaultColor)
+        .on("mouseover", mouseOver)
+        .on("mouseout", mouseOut)
+        .on("mousemove", mouseMove)
+        .on("click", clicked);
+
+      mapGroup.selectAll(".state-borders")
+        .data(stateData).enter()
+        .append("path")
+        .attr("class","state-borders")
+        .attr("d", path);
+
+      function getFormat(val) {
+        if (val == null || isNaN(val)) return "N/A";
+        if (currentIsRatio) return formatPercent(val);
+        if (currentIsRank) return Math.round(val);
+        return formatCurrency(val);
+      }
+
+      // --------- Update Map ---------
+      function updateMapColors() {
+        if (!currentDisasterSelected) return;
+        const yr = currentDate.getFullYear();
+        const mo = currentDate.getMonth() + 1;
+        const keySuffix = `_${yr}_${mo}`;
+        const localFacts = factsByKey;
+        const colorScale = getColorScale(currentDisasterSelected);
+
+        mapGroup.selectAll(".county")
+          .interrupt()
+          .transition()
+          .duration(isPlaying ? 0 : 300)
+          .attr("fill", d => {
+            const rec = localFacts.get(`${d.id}${keySuffix}`);
+            if (!rec) return defaultColor;
+            const value = rec[currentDisasterSelected];
+            if (value == null || isNaN(value) || value <= 0) return defaultColor;
+            return colorScale(value);
+          });
+      }
+
+      function drawLegend(scale, thresholds) {
+        d3.select("#choropleth").select(".legend-group").remove();
+        const legendWidth = 350, legendHeight = 10, legendX = width - 400, legendY = 25;
+        const legendGroup = d3.select('#choropleth')
+          .append('g')
+          .attr('class', 'legend-group')
+          .attr('transform', `translate(${legendX}, ${legendY})`);
+
+        // ---- Rank legend (continuous gradient) ----
+        if (currentIsRank) {
+          const defs = legendGroup.append("defs");
+          const gradient = defs.append("linearGradient")
+            .attr("id", "rankGradient")
+            .attr("x1", "0%").attr("x2", "100%").attr("y1", "0%").attr("y2", "0%");
+          for (let i = 0; i <= 100; i += 5) {
+            gradient.append("stop")
+              .attr("offset", `${i}%`)
+              .attr("stop-color", scale(i));
+          }
+
+          legendGroup.append("rect")
+            .attr("x", 0).attr("y", 0)
+            .attr("width", legendWidth)
+            .attr("height", legendHeight)
+            .style("fill", "url(#rankGradient)");
+
+          const legendScale = d3.scaleLinear().domain([1, 100]).range([0, legendWidth]);
+          const legendAxis = d3.axisBottom(legendScale)
+            .tickValues([1, 25, 50, 75, 100])
+            .tickFormat(d => d);
+
+          legendGroup.append("g")
+            .attr("transform", `translate(0,${legendHeight})`)
+            .call(legendAxis)
+            .selectAll("text").style("font-size", "10px");
+
+          legendGroup.append("text")
+            .attr("x", 0).attr("y", -5)
+            .style("font-weight", "bold").style("font-size", "12px")
+            .text(`${currentDisplayName} (Rank)`);
+          return;
+        }
+
+        // ---- Ratio legend (threshold bins 0–1) ----
+        if (currentIsRatio && thresholds) {
+          const colors = scale.range();
+          const legendScale = d3.scaleLinear()
+            .domain([0, thresholds[thresholds.length - 1]])
+            .range([0, legendWidth]);
+
+          legendGroup.selectAll("rect")
+            .data(thresholds.slice(1))
+            .enter()
+            .append("rect")
+            .attr("x", (d, i) => legendScale(thresholds[i]))
+            .attr("y", 0)
+            .attr("width", (d, i) => legendScale(thresholds[i + 1] || 1) - legendScale(thresholds[i]))
+            .attr("height", legendHeight)
+            .attr("fill", (d, i) => colors[i + 1]);
+
+          const legendAxis = d3.axisBottom(legendScale)
+            .tickValues([0, ...thresholds])
+            .tickFormat(d3.format(".0%"));
+
+          legendGroup.append("g")
+            .attr("transform", `translate(0, ${legendHeight})`)
+            .call(legendAxis)
+            .selectAll("text").style("font-size", "10px");
+
+          legendGroup.append("text")
+            .attr("x", 0).attr("y", -5)
+            .style("font-weight", "bold").style("font-size", "12px")
+            .text(`${currentDisplayName} (Ratio)`);
+          return;
+        }
+
+        // ---- Dollar-based legend (log scale) ----
+        if (thresholds) {
+          const colors = scale.range();
+          const legendScale = d3.scaleLog()
+            .domain([thresholds[0] / 10, thresholds[thresholds.length - 1] * 10])
+            .range([0, legendWidth]);
+
+          let legendRects = [];
+          let prev = thresholds[0] / 10;
+          for (let i = 0; i < colors.length; i++) {
+            const next = thresholds[i] || thresholds[thresholds.length - 1] * 10;
+            legendRects.push({ x0: prev, x1: next, color: colors[i] });
+            prev = next;
+          }
+
+          legendGroup.selectAll("rect")
+            .data(legendRects)
+            .enter()
+            .append("rect")
+            .attr("x", d => legendScale(d.x0))
+            .attr("y", 0)
+            .attr("width", d => Math.max(0, legendScale(d.x1) - legendScale(d.x0)))
+            .attr("height", legendHeight)
+            .attr("fill", d => d.color);
+
+          const legendAxis = d3.axisBottom(legendScale)
+            .tickValues(thresholds)
+            .tickFormat(d3.format("$,.0s"));
+
+          legendGroup.append("g")
+            .attr("transform", `translate(0, ${legendHeight})`)
+            .call(legendAxis)
+            .selectAll("text").style("font-size", "10px");
+
+          legendGroup.append("text")
+            .attr("x", 0).attr("y", -5)
+            .style("font-weight", "bold").style("font-size", "12px")
+            .text(`${currentDisplayName} ($)`);
+        }
+      }
+
+
+      // --------- Event Handlers ---------
+      let debounceTimer;
+      sliderTime.on("onchange", date => {
+        renderSliderLabel(date);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => onSliderChange(date), 100);
+      });
+
+      // --- Pause animation if the user interacts with the slider manually ---
+      d3.select("#slider-time-svg")
+        .on("mousedown touchstart", () => {
+          if (isPlaying) {
+            isPlaying = false;
+            clearInterval(animationTimer);
+            playButton.text("▶️ Play").classed("playing", false);
+          }
+        });
+
+      // (Optional extra safety: also stop when grabbing the handle itself)
+      d3.select("#slider-time-svg").selectAll(".parameter-value, .handle, .track, .track-inset, .track-overlay")
+        .on("mousedown touchstart", () => {
+          if (isPlaying) {
+            isPlaying = false;
+            clearInterval(animationTimer);
+            playButton.text("▶️ Play").classed("playing", false);
+          }
+        });
+
+      const playButton = d3.select("#play-pause-btn");
+      let currentIndex = 0;
+      playButton.on("click", togglePlayPause);
+
+      function togglePlayPause() {
+        isPlaying = !isPlaying;
+
+        if (isPlaying) {
+          playButton.text("⏸️ Pause").classed("playing", true);
+
+          const sliderDate = sliderTime.value();
+          currentIndex = months.findIndex(
+            d => +d3.timeMonth.floor(d) === +d3.timeMonth.floor(sliderDate)
+          );
+          if (currentIndex < 0) currentIndex = 0; // fallback
+
+          currentDate = sliderDate;
+
+          animationTimer = setInterval(() => {
+            currentIndex = (currentIndex + 1) % months.length;
+            const date = months[currentIndex];
+            const year = date.getFullYear();
+
+            // Move the slider immediately for smooth UI
+            sliderTime.value(date);
+            gTime.call(sliderTime);
+            renderSliderLabel(date);
+
+            // Wait for that year's data before painting
+            ensureYearLoaded(year).then(data => {
+              factsByKey = data.byKey;          // swap dataset first (prevents empty state)
+              currentDate = date;               // commit current date
+              updateMapColors();                // now repaint
+              // preload neighbors quietly
+              const prev = year - 1, next = year + 1;
+              if (!yearCache.has(prev) && prev >= 2000) ensureYearLoaded(prev);
+              if (!yearCache.has(next) && next <= 2025) ensureYearLoaded(next);
+            });
+          }, 300);
+        } else {
+          playButton.text("▶️ Play").classed("playing", false);
+          clearInterval(animationTimer);
+        }
+      }
+
+      function ensureYearLoaded(year) {
+        if (yearCache.has(year)) return Promise.resolve(yearCache.get(year));
+        return loadYearData(year).then(data => {
+          yearCache.set(year, data);
+          return data;
+        });
+      }
+
+      select.on("change", function() {
+        const displayName = d3.select(this).property("value");
+        currentDisplayName = displayName;
+        currentDisasterSelected = disasterColumnMap[displayName];
+        currentIsRatio = ratioColumns.has(currentDisasterSelected);
+        currentIsRank = rankColumns.has(currentDisasterSelected);
+
+        let thresholds;
+        if (currentIsRatio)
+          thresholds = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+        else if (!currentIsRank)
+          thresholds = [10_000, 100_000, 1_000_000, 10_000_000, 100_000_000];
+
+        const scale = getColorScale(currentDisasterSelected);
+        drawLegend(scale, thresholds);
+        updateMapColors();
+      });
+
+      function renderSliderLabel(date) {
+        const snapped = d3.timeMonth.floor(date);
+        currentDate = snapped;
+
+        const monthOnly = d3.timeFormat("%b")(snapped);
+        const fullLabel = d3.timeFormat("%b %Y")(snapped);
+
+        d3.select("#slider-date-display").text(fullLabel);
+
+        // Remove any old month label and append a new one near the handle
+        const handleGroups = gTime.selectAll(".parameter-value");
+        if (handleGroups.empty()) return;
+
+        const handleGroup = d3.select(handleGroups.nodes()[handleGroups.size() - 1]);
+        handleGroup.selectAll(".slider-month-label").remove();
+
+        handleGroup.append("text")
+          .attr("class", "slider-month-label")
+          .attr("x", 0)
+          .attr("y", -15)
+          .attr("text-anchor", "middle")
+          .style("font-size", "14px")
+          .style("font-weight", "bold")
+          .style("fill", "black")
+          .text(monthOnly);
+      }
+
+      function onSliderChange(date) {
+        const snapped = d3.timeMonth.floor(date);
+        const year = snapped.getFullYear();
+
+        // Preload neighbors in the background
+        const prev = year - 1, next = year + 1;
+        if (!yearCache.has(prev) && prev >= 2000) ensureYearLoaded(prev);
+        if (!yearCache.has(next) && next <= 2025) ensureYearLoaded(next);
+
+        // Only repaint after the current year is ready
+        ensureYearLoaded(year).then(data => {
+          factsByKey = data.byKey;       // swap first
+          currentDate = snapped;         // then commit the date
+          requestAnimationFrame(updateMapColors);
+        });
+      }
+
+      function clicked(d) {
+        d3.event.stopPropagation();
+        const stateFIPS = d.id.toString().padStart(5, '0').slice(0, 2);
+        const stateFeature = stateData.find(s => s.id === stateFIPS);
+        if (!stateFeature) return;
+        const [[x0, y0], [x1, y1]] = path.bounds(stateFeature);
+        const dx = x1 - x0, dy = y1 - y0;
+        const x = (x0 + x1) / 2, y = (y0 + y1) / 2;
+        const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height)));
+        const translate = [width / 2 - scale * x, height / 2 - scale * y];
+        canvasSel.transition().duration(250)
+          .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+      }
+
+      function mouseOver(d) {
+        const info = fipsData.find(f => f.CountyFIPS === +d.id);
+        const rec = factsByKey.get(`${d.id}_${currentDate.getFullYear()}_${currentDate.getMonth() + 1}`);
+        const name = info ? `${info.CountyName}, ${info.StateName}` : `FIPS: ${d.id}`;
+
+        // --- Tooltip ---
+        let html = `<strong>${name}</strong>`;
+        if (rec && currentDisasterSelected) {
+          const val = rec[currentDisasterSelected];
+          html += `<br/><strong>${currentDisplayName}:</strong> ${getFormat(val)}`;
+        } else {
+          html += `<br/>No data available`;
+        }
+
+        tooltip
+          .html(html)
+          .style("left", (d3.event.pageX + 10) + "px")
+          .style("top", (d3.event.pageY - 28) + "px")
+          .style("visibility", "visible")
+          .transition().duration(100).style("opacity", 1);
+
+        // --- Details panel ---
+        let detailsHtml = `<h4 style="margin-top:0">${name}</h4>`;
+        if (rec && currentDisasterSelected) {
+          const val = rec[currentDisasterSelected];
+          const formattedVal = getFormat(val);
+          const monthYear = d3.timeFormat("%B %Y")(currentDate);
+          const pop = rec.population ? rec.population.toLocaleString() : "N/A";
+          const femaCap = rec.fema_per_capita ? formatCurrency(rec.fema_per_capita) : "N/A";
+          const dmgCap = rec.damage_per_capita ? formatCurrency(rec.damage_per_capita) : "N/A";
+          const desc = rec.noaa_description || "No description available.";
+
+          detailsHtml += `
+            <p><strong>Population as of ${monthYear}:</strong> ${pop}</p>
+            <p><strong>${currentDisplayName}:</strong> ${formattedVal}</p>
+            <p><strong>FEMA per Capita:</strong> ${femaCap}<br>
+               <strong>Damage per Capita:</strong> ${dmgCap}</p>
+            <p><strong>Description of Latest Weather Event:</strong><br>${desc}</p>
+          `;
+        } else {
+          detailsHtml += `<p>No data for this county in the selected month.</p>`;
+        }
+
+        d3.select("#textdetails").html(detailsHtml);
+
+        // Highlight hovered county
+        d3.select(this).style("opacity", 0.3);
+      }
+
+
+      function mouseOut() {
+        tooltip.transition().duration(50)
+          .on("end", () => tooltip.style("visibility", "hidden"))
+          .style("opacity", 0);
+        d3.select(this).style("opacity", 1);
+        d3.select("#textdetails").html("<p>Hover over a county to view details.</p>");
+      }
+
+      function mouseMove() {
+        tooltip.style("left", d3.event.pageX+10+"px")
+          .style("top", d3.event.pageY+10+"px");
+      }
+
+      drawLegend(getColorScale(currentDisasterSelected));
+      updateMapColors();
+      renderSliderLabel(sliderTime.value());
+
+    });
+  </script>
+</body>
+</html>
