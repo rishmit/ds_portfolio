@@ -38,6 +38,7 @@ Welcome to my data science portfolio! This repository showcases projects I've co
 ---
 
 ## 📂 Projects
+- [Mapping Climate Extremes and Economic Vulnerabilities across the United States](./Mapping Climate Extremes and Economic Vulnerabilities across the United States/DOC/team105report.pdf)
 
 - [Comparison of Consumer Price Indexes of United States Key Metropolitan Areas During President Obama Presidency](./CPI_UnitedStates/CPI_UnitedStates.ipynb) - The project aims to looks at CPI data published by the BLS over a period ranging 1984 to 2023, and visualize how CPI has changed over time. Finally, it analyzes Barack Obama’s term as President and looks at how CPI for major Metropolitan areas evolved from the start of his presidency until the end of this second term presidency using Principal Component Analysis and Single Value Decomposition.
 
