@@ -37,6 +37,9 @@ Welcome to my data science portfolio! This repository showcases projects I've co
 
 ---
 
+## :office: Internship
+
+
 ## 📂 Projects
 - [Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset](<./Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset>) - Designed and implemented a Two-Branch CNN using a weight-sharing convolutional encoder to decouple phonon pulse-shape features from spatial arrival patterns, achieving a 1.611 mm RMSE on the SuperCDMS dataset.
   
