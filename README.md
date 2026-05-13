@@ -38,7 +38,16 @@ Welcome to my data science portfolio! This repository showcases projects I've co
 ---
 
 ## :office: Internship
+Sunshine Spend, LLC
+Data Science Intern | January 2026 - May 2026
+- Developed a command-line interface Artificial Intelligence assistant using Natural Language to SQL (NL2SQL) translation to convert natural language queries into Google BigQuery insights, with zero crashes and zero fallbacks on data questions throughout the entire evaluation period.
+- Engineered a pharmaceutical launch workflow integrating Open Payments and Medicare datasets to identify geographic market opportunities for targeted provider outreach.
+- Built an Abstract Syntax Tree (AST)-based SQL repair engine ensuring full explainability and traceability of all AI-generated query results.
+- Designed and implemented a territory clustering system — the only intern to successfully attempt actual geographic territory clustering across the evaluation cohort.
+- Optimized multi-dimensional data integration by bridging core datasets.
+- Recognized by the CEO as among the strongest performers in the intern cohort.
 
+---
 
 ## 📂 Projects
 - [Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset](<./Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset>) - Designed and implemented a Two-Branch CNN using a weight-sharing convolutional encoder to decouple phonon pulse-shape features from spatial arrival patterns, achieving a 1.611 mm RMSE on the SuperCDMS dataset.
