@@ -30,7 +30,7 @@ Welcome to my data science portfolio! This repository showcases projects I've co
 
 | Degree                     | Institution                                | Year       |
 |---------------------------|--------------------------------------------|------------|
-| M.S. in Analytics         | Georgia Institute of Technology            | _Apr 2026_ |
+| M.S. in Analytics         | Georgia Institute of Technology            | _May 2026_ |
 | M.S. in Chemistry         | Pennsylvania State University              | _Aug 2019_ |
 | M.S. in Chemistry         | Indian Institute of Technology, Delhi      | _Aug 2013_ |
 | B.S. in Chemistry         | St. Xavier's College                       | _Aug 2010_ |
