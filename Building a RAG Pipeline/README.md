@@ -41,7 +41,7 @@ pip install langchain-core langchain-text-splitters langchain-ollama langchain-c
 2. Drop any number of PDF documents into the `sources` folder.
 3. Run the main application:
 ```bash
-python app_advanced.py
+python RAGPipeline.py
 ```
 4. The system will scan the folder, chunk the text, generate embeddings, and save the vector index to a local `vectorstore/db_chroma` folder.
 5. Once the pipeline is ready, type your questions into the terminal. Type `quit` or `exit` to shut down the engine.
