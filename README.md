@@ -53,6 +53,8 @@ _Data Science Intern | January 2026 - May 2026_
 - [Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset](<./Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset>) - Designed and implemented a Two-Branch CNN using a weight-sharing convolutional encoder to decouple phonon pulse-shape features from spatial arrival patterns, achieving a 1.611 mm RMSE on the SuperCDMS dataset.
   
 - [Mapping Climate Extremes and Economic Vulnerabilities across the United States](<./Mapping Climate Extremes and Economic Vulnerabilities across the United States/DOC/team105report.pdf>) - Developed a multi-hazard "county risk index" using D3.js, Python, and 25 years of climate and economic data. Quantified the impact of extreme weather on housing (Zillow) and labor markets (BLS) to aid federal funding allocation and public relocation decisions.
+  
+- [Simple RAG Pipele](<./Builing a RAGPipeline>) - This simple RAG pipeline uses local model Ollama and local vector store ChromaDB 
 
 - [Comparison of Consumer Price Indexes of United States Key Metropolitan Areas During President Obama Presidency](./CPI_UnitedStates/CPI_UnitedStates.ipynb) - The project aims to looks at CPI data published by the BLS over a period ranging 1984 to 2023, and visualize how CPI has changed over time. Finally, it analyzes Barack Obama’s term as President and looks at how CPI for major Metropolitan areas evolved from the start of his presidency until the end of this second term presidency using Principal Component Analysis and Single Value Decomposition.
 
