@@ -50,7 +50,7 @@ _Data Science Intern | January 2026 - May 2026_
 ---
 
 ## 📂 Projects
-- [Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset](<./Machine Learning Techniques on a Noisy SuperCDMS Detector Dataset>) - Designed and implemented a Two-Branch CNN using a weight-sharing convolutional encoder to decouple phonon pulse-shape features from spatial arrival patterns, achieving a 1.611 mm RMSE on the SuperCDMS dataset.
+- [Two-Branch CNN Architecture on a Noisy SuperCDMS Detector Dataset](<./Two-Branch CNN Architecture on a Noisy SuperCDMS Detector Dataset>) - Designed and implemented a Two-Branch CNN using a weight-sharing convolutional encoder to decouple phonon pulse-shape features from spatial arrival patterns, achieving a 1.611 mm RMSE on the SuperCDMS dataset.
   
 - [Mapping Climate Extremes and Economic Vulnerabilities across the United States](<./Mapping Climate Extremes and Economic Vulnerabilities across the United States/DOC/team105report.pdf>) - Developed a multi-hazard "county risk index" using D3.js, Python, and 25 years of climate and economic data. Quantified the impact of extreme weather on housing (Zillow) and labor markets (BLS) to aid federal funding allocation and public relocation decisions.
   
